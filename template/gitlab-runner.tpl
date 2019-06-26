@@ -25,20 +25,14 @@ curl  --fail --retry 6 -L https://github.com/docker/machine/releases/download/v$
 # See: https://gitlab.com/gitlab-org/gitlab-runner/issues/3676
 docker-machine create --driver none --url localhost dummy-machine
 
-
-token=$(aws ssm get-parameters --names "${secure_parameter_store_runner_token_key}" --with-decryption --region "${secure_parameter_store_region}" | jq -r ".Parameters | .[0] | .Value")
-if [[ `echo ${runners_token}` == "__REPLACED_BY_USER_DATA__" && `echo $token` == "null" ]]
-then
-  token=$(curl --request POST -L "${runners_gitlab_url}/api/v4/runners" \
-    --form "token=${gitlab_runner_registration_token}" \
-    --form "tag_list=${gitlab_runner_tag_list}" \
-    --form "description=${giltab_runner_description}" \
-    --form "locked=${gitlab_runner_locked_to_project}" \
-    --form "run_untagged=${gitlab_runner_run_untagged}" \
-    --form "maximum_timeout=${gitlab_runner_maximum_timeout}" \
-    | jq -r .token)
-  aws ssm put-parameter --overwrite --type SecureString  --name "${secure_parameter_store_runner_token_key}" --value $token --region "${secure_parameter_store_region}"
-fi
+token=$(curl --request POST -L "${runners_gitlab_url}/api/v4/runners" \
+  --form "token=${gitlab_runner_registration_token}" \
+  --form "tag_list=${gitlab_runner_tag_list}" \
+  --form "description=${giltab_runner_description}" \
+  --form "locked=${gitlab_runner_locked_to_project}" \
+  --form "run_untagged=${gitlab_runner_run_untagged}" \
+  --form "maximum_timeout=${gitlab_runner_maximum_timeout}" \
+  | jq -r .token)
 
 sed -i.bak s/__REPLACED_BY_USER_DATA__/`echo $token`/g /etc/gitlab-runner/config.toml
 
