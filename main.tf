@@ -297,6 +297,9 @@ resource "aws_autoscaling_group" "gitlab_runner_instance" {
     }]
   )
 
+  depends_on = [
+    aws_cloudwatch_log_group.environment,
+  ]
 }
 
 resource "aws_autoscaling_schedule" "scale_in" {
